@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+ /* Base reset to prevent extra scroll */
+ @layer base {
+   html, body, #root {
+     height: 100%;
+   }
+   body { margin: 0; }
+ }
