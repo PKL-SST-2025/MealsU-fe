@@ -83,15 +83,17 @@ const RecipeDetail = () => {
   };
 
   return (
-    <div class="flex min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
-      {/* ✅ Sidebar terpisah */}
+    <div class="flex h-screen overflow-hidden bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+
+      {/* Sidebar terpisah */}
       <SidebarNavbar class="bg-olive-100" /> {/* Sesuaikan sidebar dengan hijau zaitun muda */}
 
       {/* Main Content */}
       <div class="flex-1 flex flex-col">
         <AppNavbar onSearch={handleSearch} onQuickAction={handleQuickAction} pageContext="dashboard" showBreadcrumbs={false} />
         
-        <div class="p-6 flex-1 overflow-y-auto"> {/* ✅ Padding di dalam container utama */}
+        <div class="p-6 flex-1 overflow-y-auto"> {/* Padding di dalam container utama */}
+
           {/* Recipe Header Card */}
           <div class="bg-white rounded-xl p-6 mb-6 shadow-sm border border-teal-100">
             <div class="flex gap-6">

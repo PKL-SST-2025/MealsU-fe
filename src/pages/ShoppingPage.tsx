@@ -57,8 +57,8 @@ const ShoppingList = () => {
   };
 
   return (
-    <div class="flex min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
-      {/* ✅ Sidebar terpisah */}
+    <div class="flex h-screen overflow-hidden bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+      {/* Sidebar terpisah */}
       <SidebarNavbar class="bg-olive-100" /> {/* Sesuaikan sidebar dengan hijau zaitun muda */}
 
       {/* Main Content */}
@@ -70,7 +70,7 @@ const ShoppingList = () => {
           showBreadcrumbs={false} 
         />
         
-        <div class="flex-1 p-6 overflow-y-auto"> {/* ✅ Flex-1 untuk mengisi sisa space */}
+        <div class="flex-1 p-6 overflow-y-auto"> 
           <div class="max-w-4xl">
             {/* Shopping List Header */}
             <div class="flex items-center gap-4 mb-8">

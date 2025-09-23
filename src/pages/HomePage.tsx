@@ -84,13 +84,13 @@ const MealDashboard: Component = () => {
   };
 
   return (
-    <div class="flex min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+    <div class="flex h-screen overflow-hidden bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
       <SidebarNavbar class="bg-olive-100" /> {/* Sesuaikan sidebar dengan hijau zaitun muda */}
 
       <div class="flex-1 flex flex-col">
         <AppNavbar onSearch={handleSearch} onQuickAction={handleQuickAction} pageContext="dashboard" showBreadcrumbs={false} />
 
-        <div class="flex-1 p-8">
+        <div class="flex-1 pr-20 pl-0 py-8 overflow-y-auto">
           <div class="bg-gradient-to-r from-green-50 via-teal-50 to-yellow-200 rounded-2xl p-8 mb-8 relative overflow-hidden shadow-lg border border-green-100">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-teal-500"></div>
             <div class="flex items-center justify-between">
@@ -198,18 +198,27 @@ const MealDashboard: Component = () => {
             </div>
 
             <div class="lg:col-span-8">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-stretch">
                 <For each={mealData}>
                   {(meal) => (
-                    <div class={`relative overflow-hidden group hover:shadow-xl transition-all duration-500 border border-${meal.bgColor.replace('bg-', '')}-200 rounded-2xl p-6 ${meal.bgColor}`}>
+                    <div class={`relative overflow-hidden group hover:shadow-xl transition-all duration-500 rounded-2xl p-6 ${meal.bgColor} flex flex-col h-full min-h-[320px] border`}>
+                      {/* soft gradient tint */}
                       <div class={`absolute inset-0 opacity-5 ${meal.gradient} animate-pulse`}></div>
-                      <div class="relative z-10 text-center">
+                      <div class="relative z-10 text-center flex flex-col flex-1">
                         <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                           <span class="text-3xl">{meal.image}</span>
                         </div>
-                        <h3 class="font-bold text-gray-800 mb-3 text-lg">{meal.type}</h3>
-                        <p class="text-gray-600 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity">{meal.description}</p>
-                        <div class="space-y-3 mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg">{meal.type}</h3>
+                        {/* subtitle always visible for nicer look */}
+                        <p class="text-gray-600 text-xs mt-1 mb-4">{meal.description}</p>
+
+                        {/* tags */}
+                        <div class="flex items-center justify-center gap-2 mb-4">
+                          <span class="text-[11px] px-2 py-1 rounded-full bg-white/70 text-gray-700 border border-white/70 shadow-sm">Balanced</span>
+                          <span class="text-[11px] px-2 py-1 rounded-full bg-white/70 text-gray-700 border border-white/70 shadow-sm">Recommended</span>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
                           <div class="flex items-center justify-center space-x-4 text-xs text-gray-600">
                             <div class="flex items-center space-x-1">
                               <Clock class="w-3 h-3 text-orange-500" />
@@ -223,9 +232,13 @@ const MealDashboard: Component = () => {
                             <span>{meal.recipes} recipes available</span>
                           </div>
                         </div>
-                        <button class="bg-white/80 backdrop-blur-sm text-gray-700 px-6 py-3 rounded-xl text-sm font-medium hover:bg-white hover:shadow-lg w-full transition-all duration-300 shadow-sm">
-                          See Recipe
-                        </button>
+
+                        {/* push button to bottom */}
+                        <div class="mt-auto">
+                          <button class="bg-white/80 backdrop-blur-sm text-gray-700 px-6 py-3 rounded-xl text-sm font-medium hover:bg-white hover:shadow-lg w-full transition-all duration-300 shadow-sm">
+                            See Recipe
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

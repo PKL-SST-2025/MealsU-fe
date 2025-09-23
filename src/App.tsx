@@ -12,6 +12,8 @@ import MealsPage from "./pages/MealsPage";
 import Shopping from "./pages/ShoppingPage";
 
 import Settings from "./pages/SettingsPage";
+import PlannerPage from "./pages/PlannerPage";
+import PlannerDetailPage from "./pages/PlannerDetailPage";
 import Help from "./pages/HelpPage";
 
 const App: Component = () => {
@@ -28,6 +30,8 @@ const App: Component = () => {
         <Route path="/recipes" component={RecipesPage} />
         <Route path="/meals" component={MealsPage} />
         <Route path="/shopping" component={Shopping} />
+        <Route path="/planner" component={PlannerPage} />
+        <Route path="/planner/:id" component={PlannerDetailPage} />
 
         <Route path="/settings" component={Settings} />
         <Route path="/help" component={Help} />

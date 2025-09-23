@@ -1,4 +1,4 @@
-import { createSignal, For } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import SidebarNavbar from '../components/SidebarNavbar'; // ✅ Import sidebar terpisah
 import { HelpCircle, Book, Info, MessageSquare, Lock, Shield } from 'lucide-solid';
 import AppNavbar from "../components/AppNavbar";
@@ -34,8 +34,8 @@ const HelpPage = () => {
   };
 
   return (
-    <div class="flex min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
-      {/* ✅ Sidebar terpisah */}
+    <div class="flex h-screen overflow-hidden bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+      {/* Sidebar terpisah */}
       <SidebarNavbar class="bg-olive-100" /> {/* Sesuaikan sidebar dengan hijau zaitun muda */}
 
       {/* Main Content */}

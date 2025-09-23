@@ -2,7 +2,7 @@ import { Component, createSignal } from "solid-js";
 import { useNavigate, useLocation } from "@solidjs/router";
 import { Home, Calendar, Utensils, BookOpen, ShoppingCart, Settings, HelpCircle, LogOut } from "lucide-solid";
 
-const SidebarNavbar: Component = () => {
+const SidebarNavbar: Component<{ class?: string }> = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -11,6 +11,7 @@ const SidebarNavbar: Component = () => {
 
   // Navigation items dengan path dan tooltip
   const navigationItems = [
+    { icon: Home, path: "/home", tooltip: "Home", label: "Home" },
     { icon: Calendar, path: "/calendar", tooltip: "Calendar", label: "Calendar" },
     { icon: Utensils, path: "/meals", tooltip: "Meals", label: "Meals" },
     { icon: BookOpen, path: "/recipes", tooltip: "Recipes", label: "Recipes" },
@@ -52,94 +53,81 @@ const SidebarNavbar: Component = () => {
 
   return (
     <>
-      <div class="w-16 bg-white shadow-sm flex flex-col items-center py-6 space-y-6 relative">
-        {/* Logo/Home */}
+      <div class={`${props.class ?? ''} fixed top-0 left-0 h-screen w-24 bg-teal-50/80 backdrop-blur-sm border-r border-teal-100 shadow-sm flex flex-col items-center py-5 space-y-5 relative z-40 rounded-r-3xl`}>
+        {/* Brand Circle */}
         <div 
-          class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-green-700 transition-colors group relative"
+          class="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-teal-700 transition-colors shadow"
           onClick={() => handleNavigation("/home")}
           title="Home"
         >
-          <Home class="w-5 h-5 text-white" />
-          
-          {/* Tooltip */}
-          <div class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-            Home
-          </div>
+          <div class="w-4 h-4 bg-white rounded-full"></div>
         </div>
 
         {/* Main Navigation */}
-        <div class="flex flex-col space-y-4">
+        <nav class="flex flex-col items-center space-y-4 w-full px-2">
           {navigationItems.map((item) => {
             const IconComponent = item.icon;
+            const active = isActive(item.path);
             return (
-              <div class="relative group">
-                <IconComponent 
-                  class={`w-6 h-6 cursor-pointer transition-colors ${
-                    isActive(item.path) 
-                      ? 'text-green-600' 
-                      : 'text-gray-400 hover:text-green-600'
-                  }`}
-                  onClick={() => handleNavigation(item.path)}
-                />
-                
-                {/* Tooltip */}
-                <div class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  {item.tooltip}
-                </div>
-                
-                {/* Active indicator */}
-                {isActive(item.path) && (
-                  <div class="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-green-600 rounded-r"></div>
+              <button
+                class={`w-full group transition-all duration-200 ${active ? '' : 'hover:opacity-90'}`}
+                onClick={() => handleNavigation(item.path)}
+                title={item.tooltip}
+              >
+                {active ? (
+                  <div class="bg-white rounded-2xl shadow px-2 py-2 flex flex-col items-center w-full">
+                    <IconComponent class="w-6 h-6 text-teal-600" />
+                    <span class="text-[12px] font-medium text-teal-600 mt-1">{item.label}</span>
+                  </div>
+                ) : (
+                  <div class="flex flex-col items-center text-gray-500">
+                    <IconComponent class="w-6 h-6" />
+                    <span class="text-[11px] mt-1">{item.label}</span>
+                  </div>
                 )}
-              </div>
+              </button>
             );
           })}
-        </div>
+        </nav>
 
-        <div class="flex-1"></div>
+        <div class="flex-1" />
 
         {/* Bottom Navigation */}
-        <div class="flex flex-col space-y-4">
+        <nav class="flex flex-col items-center space-y-4 w-full px-2">
           {bottomItems.map((item) => {
             const IconComponent = item.icon;
+            const active = isActive(item.path);
             return (
-              <div class="relative group">
-                <IconComponent 
-                  class={`w-6 h-6 cursor-pointer transition-colors ${
-                    isActive(item.path) 
-                      ? 'text-green-600' 
-                      : 'text-gray-400 hover:text-green-600'
-                  }`}
-                  onClick={() => handleNavigation(item.path)}
-                />
-                
-                {/* Tooltip */}
-                <div class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  {item.tooltip}
-                </div>
-                
-                {/* Active indicator */}
-                {isActive(item.path) && (
-                  <div class="absolute -left-2 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-green-600 rounded-r"></div>
+              <button
+                class={`w-full group transition-all duration-200 ${active ? '' : 'hover:opacity-90'}`}
+                onClick={() => handleNavigation(item.path)}
+                title={item.tooltip}
+              >
+                {active ? (
+                  <div class="bg-white rounded-2xl shadow px-2 py-2 flex flex-col items-center w-full">
+                    <IconComponent class="w-6 h-6 text-teal-600" />
+                    <span class="text-[12px] font-medium text-teal-600 mt-1">{item.label}</span>
+                  </div>
+                ) : (
+                  <div class="flex flex-col items-center text-gray-500">
+                    <IconComponent class="w-6 h-6" />
+                    <span class="text-[11px] mt-1">{item.label}</span>
+                  </div>
                 )}
-              </div>
+              </button>
             );
           })}
-          
-          {/* Logout Button */}
-          <div class="relative group">
-            <LogOut 
-              class="w-6 h-6 cursor-pointer text-gray-400 hover:text-red-600 transition-colors"
-              onClick={handleLogout}
-            />
-            
-            {/* Tooltip */}
-            <div class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-              Logout
-            </div>
-          </div>
-        </div>
+
+          {/* Logout */}
+          <button class="flex flex-col items-center text-gray-500 hover:text-red-600 transition-colors" onClick={handleLogout} title="Logout">
+            <LogOut class="w-6 h-6" />
+            <span class="text-[11px] mt-1">Log out</span>
+          </button>
+        </nav>
       </div>
+
+      {/* Spacer to preserve layout width so content doesn't go under the fixed sidebar */}
+      <div class="w-24" aria-hidden="true"></div>
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm() && (

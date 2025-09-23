@@ -1,42 +1,54 @@
 import { createSignal, createMemo, For, Show } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
+
 import { 
   Search, Bell, Share2, RefreshCw, Plus, Calendar, Users, Clock, 
   ChevronLeft, ChevronRight, TrendingUp, BarChart3 
 } from 'lucide-solid';
-import SidebarNavbar from "../components/SidebarNavbar"; // ✅ sidebar terpisah
+import SidebarNavbar from "../components/SidebarNavbar"; // sidebar terpisah
 import AppNavbar from "../components/AppNavbar";
 
 const MealPlannerApp = () => {
   const [currentView, setCurrentView] = createSignal('Weekly');
-  const [selectedDate, setSelectedDate] = createSignal(23); // September 23rd highlighted (today)
+  const [selectedDate, setSelectedDate] = createSignal<number | null>(null); // no preselection; highlight after click
   const [currentMonth, setCurrentMonth] = createSignal(8); // September (0-indexed)
   const [currentYear, setCurrentYear] = createSignal(2025);
-  const [hoveredDay, setHoveredDay] = createSignal(null);
+  const [hoveredDay, setHoveredDay] = createSignal<number | null>(null);
+  const navigate = useNavigate();
+
+  // Selected weekday name based on selectedDate/current month-year
+  const selectedWeekdayName = createMemo(() => {
+    const day = selectedDate();
+    if (day == null) return '';
+    const d = new Date(currentYear(), currentMonth(), day);
+    // JS: 0=Sun..6=Sat; our weekDays starts Monday
+    const map = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    return map[d.getDay()];
+  });
 
   // Handle search from AppNavbar
   const handleSearch = (query) => {
-    console.log('Searching for:', query);
-    alert(`Searching for: ${query}`);
+    console.log('Calendar search:', query);
   };
 
   // Handle quick actions from AppNavbar
   const handleQuickAction = (action) => {
-    console.log('Quick action:', action);
     switch (action) {
       case 'quick-add':
-        alert('Add new recipe');
+        navigate('/planner');
         break;
       case 'today-plan':
-        alert('Show today\'s plan');
+        // Set ke hari ini di mini calendar
+        setSelectedDate(new Date().getDate());
         break;
       case 'analytics':
-        alert('View analytics');
+        navigate('/help');
         break;
       case 'favorites':
-        alert('View favorites');
+        navigate('/recipes');
         break;
       default:
-        alert(`Unknown action: ${action}`);
+        break;
     }
   };
 
@@ -115,24 +127,25 @@ const MealPlannerApp = () => {
     const totalCalories = createMemo(() => calculateDayCalories(props.meals || []));
 
     const handleCardClick = () => {
-      alert(`Clicked on ${props.day} - Total Calories: ${totalCalories()} cal`);
+      // Buka Meals dan biarkan user melihat list harian
+      navigate('/meals');
     };
 
     const handleShareClick = (e) => {
-      e.stopPropagation(); // Prevent card click
-      alert(`Share ${props.day}'s meal plan`);
+      e.stopPropagation();
+      navigate('/planner');
     };
 
     const handleAddClick = (e) => {
-      e.stopPropagation(); // Prevent card click
-      alert(`Add new meal to ${props.day}`);
+      e.stopPropagation();
+      navigate('/planner');
     };
 
     return (
       <div 
         onClick={handleCardClick}
         class={`group relative bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full cursor-pointer ${
-          props.isSelected ? 'ring-2 ring-teal-500 ring-opacity-50' : ''
+          props.day === selectedWeekdayName() ? 'ring-2 ring-teal-500 ring-opacity-40' : ''
         }`}
       >
         {/* Card Header */}
@@ -144,7 +157,7 @@ const MealPlannerApp = () => {
                   ? 'bg-orange-400' 
                   : 'bg-teal-400'
               }`}></div>
-              <h3 class="font-semibold text-gray-800 text-lg">{props.day}</h3>
+              <h3 class={`font-semibold text-gray-800 text-lg ${props.day === selectedWeekdayName() ? 'text-teal-700' : ''}`}>{props.day}</h3>
             </div>
             <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={handleShareClick} class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors">
@@ -221,7 +234,7 @@ const MealPlannerApp = () => {
             <div class="pt-3 mt-3 border-t border-gray-100">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-gray-500">Total: {totalCalories()} calories</span>
-                <button onClick={() => alert(`View details for ${props.day}`)} class="text-teal-600 hover:text-teal-700 font-medium flex items-center space-x-1">
+                <button onClick={() => navigate('/meals')} class="text-teal-600 hover:text-teal-700 font-medium flex items-center space-x-1">
                   <TrendingUp size={12} />
                   <span>View Details</span>
                 </button>
@@ -241,56 +254,38 @@ const MealPlannerApp = () => {
       { label: 'Fiber', value: 45, color: 'from-purple-400 to-pink-500', bgColor: 'bg-purple-100' }
     ];
 
-    const handleChartClick = () => {
-      alert('Weekly Progress Chart clicked! View full report.');
-    };
+    const percent = 78; // mock
 
     return (
-      <div onClick={handleChartClick} class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 cursor-pointer">
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-800 flex items-center space-x-2">
             <BarChart3 size={20} class="text-teal-600" />
             <span>Weekly Progress</span>
           </h3>
-          <button onClick={() => alert('View Report clicked!')} class="text-teal-600 hover:text-teal-700 text-sm font-medium">
+          <button onClick={() => navigate('/help')} class="text-teal-600 hover:text-teal-700 text-sm font-medium">
             View Report
           </button>
         </div>
         
         {/* Radial Progress */}
-        <div class="relative w-48 h-48 mx-auto mb-6">
-          <svg viewBox="0 0 36 36" class="w-32 h-32 transform -rotate-90 absolute inset-0 mx-auto">
-            <circle 
-              cx="18" 
-              cy="18" 
-              r="15.9155" 
-              fill="none" 
-              stroke="#e5e7eb" 
-              strokeWidth="2"
-            />
-            <circle 
-              cx="18" 
-              cy="18" 
-              r="15.9155" 
-              fill="none" 
-              stroke="url(#gradient)" 
-              strokeWidth="2"
-              strokeDasharray="50, 100"
-              class="transition-all duration-1000"
-            />
+        <div class="w-full flex items-center justify-center mb-6">
+          <svg viewBox="0 0 120 120" class="w-40 h-40">
             <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#14b8a6' }} />
-                <stop offset="100%" style={{ stopColor: '#3b82f6' }} />
+              <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#14b8a6" />
+                <stop offset="100%" stop-color="#3b82f6" />
               </linearGradient>
             </defs>
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="8" />
+            <circle
+              cx="60" cy="60" r="52" fill="none" stroke="url(#grad)" stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray={`${percent * 3.27}, 999`}
+              transform="rotate(-90 60 60)"
+            />
+            <text x="60" y="60" text-anchor="middle" dominant-baseline="central" class="fill-gray-800" font-size="20" font-weight="700">{percent}%</text>
           </svg>
-          <div class="absolute inset-0 flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-3xl font-bold text-gray-800">78%</div>
-              <div class="text-sm text-gray-500 mt-1">Goal Achieved</div>
-            </div>
-          </div>
         </div>
 
         {/* Progress Bars */}
@@ -337,43 +332,41 @@ const MealPlannerApp = () => {
     const handleDayClick = (day) => {
       if (day) {
         setSelectedDate(day);
-        alert(`Selected date: ${day} ${months[currentMonth()]}`);
+        const yyyy = currentYear();
+        const mm = String(currentMonth() + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const iso = `${yyyy}-${mm}-${dd}`;
+        navigate(`/meals?date=${iso}`);
       }
     };
 
     const handlePrevMonthClick = () => {
       handlePrevMonth();
-      alert(`Moved to previous month: ${months[currentMonth() === 0 ? 11 : currentMonth() - 1]} ${currentYear()}`);
     };
 
     const handleNextMonthClick = () => {
       handleNextMonth();
-      alert(`Moved to next month: ${months[currentMonth() === 11 ? 0 : currentMonth() + 1]} ${currentYear()}`);
     };
 
     return (
-      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Header */}
-        <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+        <div class="px-4 py-3 border-b border-gray-100 bg-white">
           <div class="flex items-center justify-between">
             <button 
               onClick={handlePrevMonthClick}
-              class="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-200 cursor-pointer"
+              class="px-2 py-1 text-gray-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-200 cursor-pointer"
               title="Previous month"
             >
               <ChevronLeft size={18} />
             </button>
             <div class="text-center">
-              <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                {months[currentMonth()]} {currentYear()}
-              </h3>
-              <div class="text-lg font-semibold text-gray-800 mt-1">
-                {months[currentMonth()]} Overview
-              </div>
+              <div class="text-[11px] font-semibold text-teal-600 tracking-wider uppercase">{months[currentMonth()]} {currentYear()}</div>
+              <div class="text-base font-bold text-gray-800">{months[currentMonth()]} Overview</div>
             </div>
             <button 
               onClick={handleNextMonthClick}
-              class="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-200 cursor-pointer"
+              class="px-2 py-1 text-gray-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all duration-200 cursor-pointer"
               title="Next month"
             >
               <ChevronRight size={18} />
@@ -382,13 +375,10 @@ const MealPlannerApp = () => {
         </div>
 
         {/* Weekdays */}
-        <div class="grid grid-cols-7 gap-px bg-gray-200">
+        <div class="grid grid-cols-7 bg-gray-50">
           <For each={daysOfWeek}>
             {(day) => (
-              <div 
-                onClick={() => alert(`Clicked on ${day}`)}
-                class="bg-white py-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100"
-              >
+              <div class="py-2 text-center text-[11px] font-semibold text-gray-500 tracking-wider">
                 {day}
               </div>
             )}
@@ -396,7 +386,7 @@ const MealPlannerApp = () => {
         </div>
 
         {/* Days Grid */}
-        <div class="grid grid-cols-7 gap-px bg-gray-200">
+        <div class="grid grid-cols-7 gap-1 px-2 pb-2">
           <For each={calendarDays}>
             {(item) => {
               const isToday = item.date && 
@@ -405,36 +395,30 @@ const MealPlannerApp = () => {
                 item.date.getFullYear() === new Date().getFullYear();
               const isSelected = item.day === selectedDate();
               const isHovered = hoveredDay() === item.day;
-              const hasMeals = item.day && Math.random() > 0.3;
+              // Deterministic indicator (hindari flicker): contoh sederhana berdasarkan modulus tanggal
+              const hasMeals = !!item.day && (item.day % 2 === 0);
 
               return (
                 <button
                   onClick={() => handleDayClick(item.day)}
                   onMouseEnter={() => item.day && setHoveredDay(item.day)}
                   onMouseLeave={() => setHoveredDay(null)}
-                  class={`relative group p-2 text-sm font-medium transition-all duration-200 flex flex-col h-14 cursor-pointer ${
-                    !item.day 
-                      ? 'invisible' 
-                      : isToday 
-                        ? 'bg-gradient-to-br from-orange-400 to-orange-500 text-white' 
-                        : isSelected 
-                          ? 'bg-gradient-to-br from-teal-500 to-blue-500 text-white shadow-lg' 
-                          : isHovered 
-                            ? 'bg-teal-50 text-teal-700 hover:bg-teal-100' 
+                  class={`relative group p-2 text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center h-12 md:h-14 rounded-xl cursor-pointer ${
+                    !item.day
+                      ? 'invisible'
+                      : isSelected
+                        ? 'bg-white ring-2 ring-teal-500 text-teal-700 shadow-sm'
+                        : isToday
+                          ? 'bg-white border border-orange-300 text-orange-600'
+                          : isHovered
+                            ? 'bg-teal-50 text-teal-700'
                             : 'text-gray-700 hover:bg-gray-50'
                   }`}
                   title={item.day ? `${item.day} ${months[item.date.getMonth()]}` : ''}
                 >
-                  <span class="text-xs">{item.day || ''}</span>
+                  <span class="text-xs md:text-sm font-semibold leading-none">{item.day || ''}</span>
                   {item.day && hasMeals && (
-                    <div class={`mt-0.5 w-full h-0.5 rounded-full ${
-                      isSelected || isToday ? 'bg-white bg-opacity-50' : 'bg-teal-400'
-                    }`}></div>
-                  )}
-                  {item.day && (
-                    <div class={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${
-                      isSelected ? 'bg-white' : 'bg-teal-500'
-                    } opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                    <span class={`mt-1 block w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-teal-600' : 'bg-teal-500'}`}></span>
                   )}
                 </button>
               );
@@ -443,23 +427,15 @@ const MealPlannerApp = () => {
         </div>
 
         {/* Legend */}
-        <div class="p-3 bg-gray-50">
-          <div class="flex items-center justify-between text-xs">
-            <div 
-              onClick={() => alert('Legend: Has meals clicked')}
-              class="flex items-center space-x-2 cursor-pointer hover:text-teal-600"
-            >
-              <div class="w-2 h-2 bg-teal-400 rounded-full"></div>
-              <span class="text-gray-600">Has meals</span>
-            </div>
-            <div 
-              onClick={() => alert('Legend: Today clicked')}
-              class="flex items-center space-x-2 cursor-pointer hover:text-orange-600"
-            >
-              <div class="w-2 h-2 bg-orange-400 rounded-full"></div>
-              <span class="text-gray-600">Today</span>
-            </div>
-          </div>
+        <div class="px-4 py-3 bg-white border-t border-gray-100 flex items-center gap-3 text-[11px]">
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-100">
+            <span class="w-2 h-2 bg-teal-500 rounded-full"></span>
+            Has meals
+          </span>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-100">
+            <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+            Today
+          </span>
         </div>
       </div>
     );
@@ -484,24 +460,21 @@ const MealPlannerApp = () => {
   };
 
   return (
-    <div class="flex min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
+    <div class="flex h-screen overflow-hidden bg-gradient-to-br from-yellow-50 via-white to-yellow-50">
       <SidebarNavbar class="bg-olive-100" /> {/* Sesuaikan sidebar dengan hijau zaitun muda */}
 
       <div class="flex-1 flex flex-col">
         <AppNavbar onSearch={handleSearch} onQuickAction={handleQuickAction} pageContext="planner" showBreadcrumbs={false} />
       
         {/* Main Content */}
-        <div class="flex-1 p-6 overflow-hidden">
+        <div class="flex-1 p-6 overflow-y-auto">
           {/* Enhanced View Toggle */}
-          <div class="flex items-center space-x-2 mb-8">
+          <div class="flex items-center space-x-2 mb-6">
             <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
               <For each={['Weekly', 'Monthly', 'Yearly']}>
                 {(view) => (
                   <button
-                    onClick={() => {
-                      setCurrentView(view);
-                      alert(`Switched to ${view} view`);
-                    }}
+                    onClick={() => setCurrentView(view)}
                     class={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative cursor-pointer ${
                       currentView() === view 
                         ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-lg transform scale-105' 
@@ -516,21 +489,20 @@ const MealPlannerApp = () => {
                 )}
               </For>
             </div>
-            <div 
-              onClick={() => alert(`Showing ${currentView()} view • ${selectedDate()} ${months[currentMonth()]}`)}
-              class="text-sm text-gray-500 ml-4 cursor-pointer hover:text-teal-600"
-            >
-              Showing {currentView()} view • {selectedDate()} {months[currentMonth()]}
+            <div class="text-sm text-gray-500 ml-4">
+              <Show when={selectedDate() !== null} fallback={<span>Showing {currentView()} view</span>}>
+                Showing {currentView()} view • {selectedDate()} {months[currentMonth()]}
+              </Show>
             </div>
           </div>
 
           {/* Main Content Area */}
-          <div class="flex gap-8 h-[calc(100vh-200px)]">
+          <div class="flex gap-8 min-h-[calc(100vh-220px)]">
             {/* Main Calendar Content */}
-            <div class="flex-1 overflow-hidden">
+            <div class="flex-1">
               <Show when={currentView() === 'Weekly'}>
-                <div class="h-full space-y-6 overflow-y-auto pr-2">
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                     <For each={weekDays.slice(0, 6)}>
                       {(day) => (
                         <MealCard 
@@ -542,7 +514,7 @@ const MealPlannerApp = () => {
                       )}
                     </For>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                     <For each={['Sunday']}>
                       {(day) => (
                         <MealCard 
@@ -592,7 +564,7 @@ const MealPlannerApp = () => {
             </div>
 
             {/* Enhanced Right Sidebar */}
-            <div class="w-80 flex flex-col space-y-6">
+            <div class="w-80 flex flex-col space-y-6 sticky top-4 self-start">
               {/* Enhanced Mini Calendar */}
               <EnhancedMiniCalendar />
               
@@ -602,7 +574,6 @@ const MealPlannerApp = () => {
               {/* Quick Actions */}
               <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                 <h3 
-                  onClick={() => alert('Quick Actions header clicked')}
                   class="font-semibold text-gray-800 mb-4 flex items-center space-x-2 cursor-pointer hover:text-teal-600"
                 >
                   <Clock size={18} class="text-teal-600" />

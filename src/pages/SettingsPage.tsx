@@ -168,13 +168,13 @@ const SettingsPage = () => {
   );
 
   return (
-    <div class="flex min-h-screen bg-gray-50"> {/* ✅ Flex layout */}
-      {/* ✅ Sidebar terpisah */}
+    <div class="flex h-screen overflow-hidden bg-gray-50"> 
+      {/* Sidebar terpisah */}
       <SidebarNavbar />
       
       {/* Main Content */}
-      <div class="flex-1"> {/* ✅ Flex-1 untuk mengisi sisa space */}
-        <div class="p-6"> {/* ✅ Padding di dalam container utama */}
+      <div class="flex-1 flex flex-col"> 
+        <div class="p-6 flex-1 overflow-y-auto"> 
           <div class="max-w-4xl">
             <div class="flex items-center gap-4 mb-8">
               <Settings class="text-teal-500" size={32} />
