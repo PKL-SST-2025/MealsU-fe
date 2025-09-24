@@ -11,6 +11,9 @@ importers:
       '@solidjs/router':
         specifier: ^0.15.3
         version: 0.15.3(solid-js@1.9.9)
+      lucide-solid:
+        specifier: ^0.544.0
+        version: 0.544.0(solid-js@1.9.9)
       solid-js:
         specifier: ^1.9.9
         version: 1.9.9
@@ -758,6 +761,11 @@ packages:
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
+
+  lucide-solid@0.544.0:
+    resolution: {integrity: sha512-BQ4hysggShgAFE66U2AStAyOdD0U2Oraec1P35+m5b+SDuh2mWf8kTGbtMmZEmy0MKKQoKP5PEU77FrADbAQTw==}
+    peerDependencies:
+      solid-js: ^1.4.7
 
   magic-string@0.30.18:
     resolution: {integrity: sha512-yi8swmWbO17qHhwIBNeeZxTceJMeBvWJaId6dyvTSOwTipqeHhMhOrz6513r1sOKnpvQ7zkhlG8tPrpilwTxHQ==}
@@ -1565,6 +1573,10 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
+
+  lucide-solid@0.544.0(solid-js@1.9.9):
+    dependencies:
+      solid-js: 1.9.9
 
   magic-string@0.30.18:
     dependencies:
