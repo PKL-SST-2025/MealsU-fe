@@ -1,6 +1,8 @@
  import type { Component } from 'solid-js';
  import { createSignal } from 'solid-js';
+ import { useNavigate } from '@solidjs/router';
  import Navbar from '../components/Navbar';
+ import { Instagram, Linkedin, Twitter, Facebook } from 'lucide-solid';
 
 const faqs = [
   {
@@ -72,6 +74,7 @@ const FAQItem: Component<{ q: string; a: string }> = (props) => {
 };
 
 const LandingPage: Component = () => {
+  const navigate = useNavigate();
   return (
     <div class="min-h-screen bg-gray-50">
       {/* Nav */}
@@ -98,11 +101,8 @@ const LandingPage: Component = () => {
               dan daftar belanja otomatis untuk hidup lebih teratur dan sehat.
             </p>
             <div class="mt-8 flex items-center justify-center gap-3">
-              <button class="rounded-lg bg-[#606C38] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#4f5a2f]">
+              <button onClick={() => navigate('/login')} class="rounded-lg bg-[#606C38] px-5 py-3 text-sm font-semibold text-white shadow hover:bg-[#4f5a2f]">
                 Mulai Sekarang
-              </button>
-              <button class="rounded-lg bg-white/10 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/25 hover:bg-white/20">
-                Lihat Demo
               </button>
             </div>
           </div>
@@ -158,18 +158,46 @@ const LandingPage: Component = () => {
       </section>
 
       {/* Footer */}
-      <footer class="border-t border-gray-200 bg-white">
-        <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <div class="flex items-center gap-2">
-            <div class="h-7 w-7 rounded-md bg-gradient-to-tr from-green-500 to-emerald-600"></div>
-            <span class="text-sm font-semibold text-gray-800">MealsU</span>
+      <footer class="relative mt-10 rounded-t-3xl bg-gradient-to-b from-[#606C38] to-[#283618] text-white">
+        <div class="mx-auto max-w-6xl px-6 py-12 text-center">
+          {/* Logo mark */}
+          <div class="mx-auto mb-5 h-10 w-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
+            <div class="h-5 w-5 rounded-sm bg-white/80" />
           </div>
-          <nav class="flex items-center gap-4 text-sm text-gray-600">
-            <a class="hover:text-gray-900" href="#">Features</a>
-            <a class="hover:text-gray-900" href="#">Sign In</a>
-            <a class="hover:text-gray-900" href="#">Sign Up</a>
+          {/* Mission copy */}
+          <p class="mx-auto max-w-2xl text-[13px] md:text-[15px] leading-relaxed text-white/90">
+            MealsU adalah platform Meal Plan untuk membantumu menjaga pola makan tetap terjadwal. 
+            Atur menu mingguan, simpan resep favorit, dan ikuti rencana makan yang lebih teratur.
+          </p>
+
+          {/* Socials */}
+          <div class="mt-6 flex items-center justify-center gap-3">
+            <a class="inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-white/20 hover:ring-white/40 bg-white/10 hover:bg-white/15 transition" href="#" aria-label="Instagram"><Instagram size={18} /></a>
+            <a class="inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-white/20 hover:ring-white/40 bg-white/10 hover:bg-white/15 transition" href="#" aria-label="LinkedIn"><Linkedin size={18} /></a>
+            <a class="inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-white/20 hover:ring-white/40 bg-white/10 hover:bg-white/15 transition" href="#" aria-label="Twitter"><Twitter size={18} /></a>
+            <a class="inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-white/20 hover:ring-white/40 bg-white/10 hover:bg-white/15 transition" href="#" aria-label="Facebook"><Facebook size={18} /></a>
+          </div>
+
+          {/* Divider */}
+          <div class="my-6 h-px w-full bg-white/20" />
+
+          {/* Footer nav (centered single row) */}
+          <nav class="text-[13px] md:text-[15px] flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-white/90">
+            <a href="#" class="hover:text-white">Rumah</a>
+            <a href="#features" class="hover:text-white">Tentang</a>
+            <a href="#features" class="hover:text-white">Layanan</a>
+            <a href="#newsletter" class="hover:text-white">Newsletter</a>
+            <a href="#testimonials" class="hover:text-white">Testimonial</a>
+            <a href="#faq" class="hover:text-white">Hubungi</a>
           </nav>
-          <p class="text-xs text-gray-500">© {new Date().getFullYear()} MealsU. All rights reserved.</p>
+
+          <div class="my-6 h-px w-full bg-white/20" />
+
+          {/* Bottom line */}
+          <div class="flex flex-col gap-2 text-[11px] text-white/80 md:flex-row md:items-center md:justify-between">
+            <p>© {new Date().getFullYear()} MealsU. Semua hak dilindungi.</p>
+            <p>Dikembangkan oleh tim MealsU</p>
+          </div>
         </div>
       </footer>
     </div>

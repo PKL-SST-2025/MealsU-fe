@@ -1,4 +1,4 @@
-import { Component, createSignal, For } from "solid-js";
+import { Component, createSignal, For, onMount, Show } from "solid-js";
 import {
   Clock,
   ShoppingCart,
@@ -11,6 +11,17 @@ import SidebarNavbar from "../components/SidebarNavbar";
 import AppNavbar from "../components/AppNavbar";
 
 const MealDashboard: Component = () => {
+  // Check localStorage for meal plans to decide CTA
+  const [hasPlans, setHasPlans] = createSignal<boolean>(true);
+  onMount(() => {
+    try {
+      const raw = localStorage.getItem('mealPlans') || '[]';
+      const parsed = JSON.parse(raw);
+      setHasPlans(Array.isArray(parsed) && parsed.length > 0);
+    } catch {
+      setHasPlans(false);
+    }
+  });
   const [shoppingItems, setShoppingItems] = createSignal([
     { id: 1, name: "Eggs", checked: false, icon: "🥚", category: "Dairy" },
     { id: 2, name: "Chicken breast", checked: false, icon: "🍗", category: "Meat" },
@@ -60,16 +71,26 @@ const MealDashboard: Component = () => {
   ];
 
   const todayMeals = [
-    { id: 1, name: "Bread & Jam, Coffee", time: "7:30 AM", calories: 280, avatars: ["👤", "👤", "👤"], likes: 31, comments: 1, type: "breakfast" },
-    { id: 2, name: "Grilled Chicken, Salad", time: "12:30 PM", calories: 420, avatars: ["👤", "👤"], likes: 28, comments: 2, type: "lunch" },
-    { id: 3, name: "Fruit tarts, Chocolate mousse", time: "7:00 PM", calories: 380, avatars: ["👤", "👤", "👤"], likes: 45, comments: 3, type: "dinner" },
+    { id: 1, name: "Omelette", description: "A basic omelette needs eggs, a fat for the pan like butter or oil, and seasonings like salt and pepper.", type: "Breakfast" },
+    { id: 2, name: "Grilled Chicken, Salad", description: "Light and balanced lunch with greens and protein.", type: "Lunch" },
+    { id: 3, name: "Pasta Bolognese", description: "Classic Italian pasta with rich tomato and meat sauce.", type: "Dinner" },
   ];
 
-  const handleSearch = (query) => {
+  const typeChipColor = (t: string) => {
+    switch (t) {
+      case 'Breakfast': return 'bg-teal-50 text-teal-700 border-teal-100';
+      case 'Lunch': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'Dinner': return 'bg-purple-50 text-purple-700 border-purple-100';
+      case 'Snack': return 'bg-amber-50 text-amber-700 border-amber-100';
+      default: return 'bg-gray-50 text-gray-700 border-gray-100';
+    }
+  };
+
+  const handleSearch = (query: string) => {
     console.log('Dashboard search:', query);
   };
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = (action: string) => {
     console.log('Dashboard quick action:', action);
     switch (action) {
       case 'quick-add':
@@ -91,7 +112,7 @@ const MealDashboard: Component = () => {
         <AppNavbar onSearch={handleSearch} onQuickAction={handleQuickAction} pageContext="dashboard" showBreadcrumbs={false} />
 
         <div class="flex-1 pr-20 pl-0 py-8 overflow-y-auto">
-          <div class="bg-gradient-to-r from-green-50 via-teal-50 to-yellow-200 rounded-2xl p-8 mb-8 relative overflow-hidden shadow-lg border border-green-100">
+          <div class="bg-gradient-to-r from-green-50 via-teal-50 to-yellow-200 rounded-2xl p-8 mb-6 relative overflow-hidden shadow-lg border border-green-100">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-teal-500"></div>
             <div class="flex items-center justify-between">
               <div class="flex-1">
@@ -99,6 +120,22 @@ const MealDashboard: Component = () => {
                   <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span class="text-sm font-medium text-green-700">Live Dashboard</span>
                 </div>
+
+    {/* Scoped pretty scrollbar for the list above */}
+    <style>{`
+      .nice-scroll::-webkit-scrollbar { width: 10px; }
+      .nice-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 9999px; }
+      .nice-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(20,184,166,0.35), rgba(59,130,246,0.35));
+        border-radius: 9999px;
+        border: 3px solid rgba(255,255,255,0.6);
+      }
+      .nice-scroll:hover::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(20,184,166,0.6), rgba(59,130,246,0.6));
+      }
+      /* Firefox */
+      .nice-scroll { scrollbar-width: thin; scrollbar-color: rgba(20,184,166,0.6) transparent; }
+    `}</style>
                 <h1 class="text-4xl font-bold text-gray-800 mb-4 leading-tight">
                   Plan Your Meals,
                   <br />
@@ -134,64 +171,56 @@ const MealDashboard: Component = () => {
             </div>
           </div>
 
+          {/* CTA to create plan when no plans exist */}
+          <Show when={!hasPlans()}>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-800">Mulailah untuk membuat plan</h3>
+                <p class="text-sm text-gray-500 mt-1">Buat rencana makan mingguan agar menu tersusun rapi setiap hari.</p>
+              </div>
+              <button class="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-xl font-medium shadow" onClick={() => location.assign('/planner')}>
+                Buat Plan
+              </button>
+            </div>
+          </Show>
+
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
             <div class="lg:col-span-4 space-y-6">
-              <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <div class="flex items-center justify-between mb-6">
+              <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between mb-4">
                   <div>
-                    <span class="text-xs text-gray-500 bg-teal-100 px-3 py-1 rounded-full font-medium inline-flex items-center space-x-1">
-                      <Clock class="w-3 h-3" />
-                      <span>Today • September 22</span>
-                    </span>
-                    <h2 class="text-xl font-bold text-gray-800 mt-2">Your Meals Today</h2>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-2xl font-bold text-teal-600">1,080</div>
-                    <div class="text-xs text-gray-500">calories</div>
+                    <h2 class="text-xl font-bold text-gray-800">Your Meals Today</h2>
+                    <p class="text-sm text-gray-500">Ringkasan makanan hari ini</p>
                   </div>
                 </div>
-                <div class="space-y-4">
+                {/* Scrollable list: show ~2 items, rest scroll inside */}
+                <div class="nice-scroll grid grid-cols-1 gap-4 h-[320px] md:h-[340px] lg:h-[360px] overflow-y-auto pr-1">
                   <For each={todayMeals}>
-                    {(meal) => (
-                      <div class="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-md transition-all duration-300 border border-gray-200">
-                        <div class="flex-1">
-                          <div class="flex items-start justify-between mb-2">
-                            <h3 class="font-semibold text-gray-800 text-sm leading-tight flex-1 mr-2 line-clamp-1">
-                              {meal.name}
-                            </h3>
-                            <span class="text-xs text-teal-600 font-medium px-2 py-1 bg-teal-50 rounded-full">
-                              {meal.calories} cal
-                            </span>
-                          </div>
-                          <div class="flex items-center justify-between text-xs">
-                            <span class="text-gray-500">{meal.time}</span>
-                            <div class="flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div class="flex -space-x-1">
-                                <For each={meal.avatars}>
-                                  {(avatar) => (
-                                    <div class="w-5 h-5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full border-2 border-white flex items-center justify-center text-xs shadow-sm">
-                                      {avatar}
-                                    </div>
-                                  )}
-                                </For>
-                              </div>
-                              <div class="flex items-center space-x-2 text-gray-400">
-                                <span class="flex items-center">
-                                  <Heart class="w-3 h-3" />
-                                  <span class="ml-1">{meal.likes}</span>
-                                </span>
-                                <span class="flex items-center">
-                                  💬 {meal.comments}
-                                </span>
+                    {(meal) => {
+                      const bg = meal.type === 'Breakfast' ? 'bg-pink-100' : meal.type === 'Lunch' ? 'bg-blue-100' : 'bg-purple-100';
+                      const ring = meal.type === 'Breakfast' ? 'from-pink-400 to-rose-400' : meal.type === 'Lunch' ? 'from-sky-400 to-blue-400' : 'from-purple-400 to-indigo-400';
+                      return (
+                        <div class={`group relative rounded-2xl p-4 border border-gray-300 ${bg} transition-all duration-300 hover:scale-[1.01] shadow-sm hover:shadow-lg`}> 
+                          {/* glow */}
+                          <div class={`pointer-events-none absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur`} />
+                          <div class={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${ring} opacity-[0.06]`}></div>
+
+                          <div class="relative flex items-start justify-between">
+                            <div class="flex items-start gap-3">
+                              <div class="w-9 h-9 rounded-lg bg-white/60 border border-white/70 flex items-center justify-center shadow-sm">🍽️</div>
+                              <div>
+                                <h3 class="font-semibold text-gray-800">{meal.name}</h3>
+                                <p class="text-sm text-gray-700 mt-1">{meal.description}</p>
                               </div>
                             </div>
+                            <span class={`text-xs px-2 py-1 rounded-full border bg-white/70 text-gray-700 ${meal.type === 'Breakfast' ? 'border-pink-200' : meal.type === 'Lunch' ? 'border-blue-200' : 'border-purple-200'}`}>{meal.type}</span>
+                          </div>
+                          <div class="relative text-right mt-4">
+                            <button class="text-teal-700 text-sm font-medium hover:text-teal-800">See recipe</button>
                           </div>
                         </div>
-                        <button class="bg-teal-500 text-white px-4 py-2 rounded-lg text-xs font-medium shadow-lg hover:shadow-xl transition-all ml-3 whitespace-nowrap">
-                          View Details
-                        </button>
-                      </div>
-                    )}
+                      );
+                    }}
                   </For>
                 </div>
               </div>

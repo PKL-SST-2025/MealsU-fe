@@ -2,7 +2,7 @@ import { createSignal, createMemo, For, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 
 import { 
-  Search, Bell, Share2, RefreshCw, Plus, Calendar, Users, Clock, 
+  Search, Bell, Share2, RefreshCw, Plus, Calendar, Users, Clock, Heart, User,
   ChevronLeft, ChevronRight, TrendingUp, BarChart3 
 } from 'lucide-solid';
 import SidebarNavbar from "../components/SidebarNavbar"; // sidebar terpisah
@@ -131,69 +131,75 @@ const MealPlannerApp = () => {
       navigate('/meals');
     };
 
-    const handleShareClick = (e) => {
+    const handleShareClick = (e: MouseEvent) => {
       e.stopPropagation();
       navigate('/planner');
     };
 
-    const handleAddClick = (e) => {
+    const handleAddClick = (e: MouseEvent) => {
       e.stopPropagation();
       navigate('/planner');
     };
+
+    // helper: is today
+    const todayName = (() => {
+      const map = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      return map[new Date().getDay()];
+    })();
 
     return (
       <div 
         onClick={handleCardClick}
-        class={`group relative bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full cursor-pointer ${
+        class={`group relative rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full cursor-pointer bg-gradient-to-br from-gray-50 to-white min-h-[200px] ${
           props.day === selectedWeekdayName() ? 'ring-2 ring-teal-500 ring-opacity-40' : ''
         }`}
       >
         {/* Card Header */}
-        <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <div class={`w-2 h-2 rounded-full ${
-                props.day === 'Saturday' || props.day === 'Sunday' 
-                  ? 'bg-orange-400' 
-                  : 'bg-teal-400'
-              }`}></div>
-              <h3 class={`font-semibold text-gray-800 text-lg ${props.day === selectedWeekdayName() ? 'text-teal-700' : ''}`}>{props.day}</h3>
+        <div class="p-5 pb-2">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-300 shadow-sm">
+                {props.day}
+              </span>
+              <Show when={props.day === todayName}>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">Today</span>
+              </Show>
             </div>
-            <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={handleShareClick} class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors">
-                <Share2 size={14} />
-              </button>
-              <button onClick={handleAddClick} class="p-1 text-gray-400 hover:text-teal-600 rounded-full hover:bg-teal-50 transition-colors">
-                <Plus size={14} />
-              </button>
-            </div>
+            <button onClick={handleAddClick} class="text-xs text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 rounded-lg px-2 py-1">Edit</button>
           </div>
         </div>
 
         {props.isCompact ? (
-          <div class="mt-3 space-y-2 p-4">
-            <For each={props.meals.slice(0, 1)}>
+          <div class="px-5 pb-4 space-y-2">
+            {/* bulleted list */}
+            <For each={props.meals.slice(0, 3)}>
               {(meal) => (
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600 truncate flex-1">{meal.name}</span>
-                  <div class="flex items-center space-x-2 ml-2 flex-shrink-0">
-                    <span class="text-xs text-gray-500">{meal.time}</span>
-                    <div class="flex gap-0.5">
-                      <For each={meal.icons.slice(0, 2)}>
-                        {(icon) => <span class="text-sm">{icon}</span>}
-                      </For>
-                      {meal.icons.length > 2 && <span class="text-xs text-gray-400">+{meal.icons.length - 2}</span>}
-                    </div>
+                <div class="flex items-start justify-between text-sm">
+                  <div class="flex items-start gap-2 min-w-0">
+                    <span class="text-gray-400">•</span>
+                    <span class="text-gray-700 truncate">{meal.name}</span>
+                  </div>
+                  <div class="flex items-center -space-x-1 ml-3">
+                    <For each={[...Array((meal as any).people || 3).keys()] }>
+                      {() => (
+                        <div class="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-300 shadow-sm flex items-center justify-center text-emerald-700">
+                          <User size={12} />
+                        </div>
+                      )}
+                    </For>
                   </div>
                 </div>
               )}
             </For>
-            {props.meals.length > 1 && (
-              <div class="text-xs text-gray-500 flex items-center justify-between">
-                <span>+{props.meals.length - 1} more</span>
-                <span class="text-teal-600 font-medium">{totalCalories()} cal</span>
+
+            {/* footer */}
+            <div class="pt-2 mt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-4 text-gray-600">
+                <span class="inline-flex items-center gap-1"><Clock size={12} /> 3h</span>
+                <span class="inline-flex items-center gap-1"><Heart size={12} class="text-rose-500" /> 11k</span>
               </div>
-            )}
+              <button onClick={() => navigate('/meals')} class="text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-1 rounded-full font-medium">Details</button>
+            </div>
           </div>
         ) : (
           <div class="mt-4 space-y-3 p-4">

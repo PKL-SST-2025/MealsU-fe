@@ -1,5 +1,5 @@
 import { createSignal, Show, For, onCleanup } from 'solid-js';
-import { Portal } from 'solid-js/web';
+// Portal not needed for notif dropdown after simplification
 import { useNavigate } from '@solidjs/router';
 import { 
   Search, Bell, RefreshCw, Plus, User, Calendar as CalendarIcon, Clock, 
@@ -8,7 +8,7 @@ import {
 
 import { ShoppingCart } from 'lucide-solid'; // Tambahkan ShoppingCart
 
-const AppNavbar = (props) => {
+const AppNavbar = (props: any) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = createSignal('');
   const [showNotifications, setShowNotifications] = createSignal(false);
@@ -24,8 +24,8 @@ const AppNavbar = (props) => {
   const timer = setInterval(() => setNow(new Date()), 1000);
   onCleanup(() => clearInterval(timer));
 
-  // Close notifications when clicking outside or pressing ESC (temporarily disabled for debugging)
-  const ENABLE_OUTSIDE_CLOSE = false;
+  // Close notifications when clicking outside or pressing ESC
+  const ENABLE_OUTSIDE_CLOSE = true;
   if (typeof window !== 'undefined' && ENABLE_OUTSIDE_CLOSE) {
     const handleDocClick = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -55,15 +55,53 @@ const AppNavbar = (props) => {
   const [currentYear, setCurrentYear] = createSignal(new Date().getFullYear()); // 2025
   const [selectedDate, setSelectedDate] = createSignal(new Date().getDate()); // 23
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: any) => {
     setSearchQuery(e.target.value);
     if (props.onSearch) {
       props.onSearch(e.target.value);
     }
   };
 
-  const handleNotificationClick = (e) => {
+  // Theme toggle (light/dark)
+  const [isDark, setIsDark] = createSignal<boolean>(() => {
+    try { return (localStorage.getItem('theme') || '') === 'dark'; } catch { return false; }
+  }) as any;
+  const toggleTheme = () => {
+    const next = !isDark();
+    setIsDark(next);
+    try {
+      localStorage.setItem('theme', next ? 'dark' : 'light');
+    } catch {}
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', next);
+    }
+  };
+
+  // Current plan chip data
+  const currentPlanName = () => {
+    try {
+      const plans = JSON.parse(localStorage.getItem('mealPlans') || '[]');
+      const sel = localStorage.getItem('lastSelectedPlanId');
+      const found = plans.find((p: any) => String(p.id) === String(sel)) || plans[0];
+      return found?.name ? String(found.name) : 'No Plan';
+    } catch { return 'No Plan'; }
+  };
+
+  const isDemo = () => {
+    try {
+      const user = localStorage.getItem('auth:user') || localStorage.getItem('authToken') || localStorage.getItem('auth:token');
+      return !user;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleNotificationClick = (e: any) => {
     e.stopPropagation();
+    if (isDemo()) {
+      navigate('/login');
+      return;
+    }
     // Position dropdown relative to button
     if (notifBtnRef) {
       const r = notifBtnRef.getBoundingClientRect();
@@ -72,9 +110,11 @@ const AppNavbar = (props) => {
       const left = Math.max(8, r.right - width + (window.scrollX || 0));
       const top = r.bottom + 8 + (window.scrollY || 0);
       setDropdownPos({ top, left });
+    } else {
+      // Fallback position (top-right corner under navbar)
+      setDropdownPos({ top: (56 + (window.scrollY || 0)), left: Math.max(8, (window.innerWidth || 360) - 320 - 16) });
     }
     const next = !showNotifications();
-    console.log('[Notif] toggle', { next, pos: dropdownPos(), btn: !!notifBtnRef });
     setShowNotifications(next);
     if (props.onNotificationClick) {
       props.onNotificationClick();
@@ -88,7 +128,7 @@ const AppNavbar = (props) => {
     }
   };
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = (action: string) => {
     if (props.onQuickAction) {
       props.onQuickAction(action);
     }
@@ -144,15 +184,15 @@ const AppNavbar = (props) => {
     },
   ];
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = (type: string) => {
     const icons = {
       recipe: Heart,
       comment: MessageCircle,
-      plan: Calendar,
+      plan: CalendarIcon,
       shopping: ShoppingCart,
-      summary: Calendar
-    };
-    const Icon = icons[type] || Bell;
+      summary: CalendarIcon
+    } as const;
+    const Icon = (icons as Record<string, any>)[type] || Bell;
     return <Icon size={16} />;
   };
 
@@ -200,7 +240,7 @@ const AppNavbar = (props) => {
     }
   };
 
-  const handleDayClick = (day) => {
+  const handleDayClick = (day: number) => {
     if (day) {
       setSelectedDate(day);
       setShowCalendar(false); // Tutup kalender setelah memilih
@@ -286,19 +326,22 @@ const AppNavbar = (props) => {
                 <span class="sr-only">You have {unreadCount} unread notifications</span>
               </button>
               <Show when={showNotifications()}>
-                <Portal>
-                  <div ref={(el) => notifDropdownRef = el as HTMLDivElement} class="fixed w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[3000] max-h-80 overflow-y-auto" style={{ top: `${dropdownPos().top}px`, left: `${dropdownPos().left}px` }}>
-                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                      <div class="flex items-center justify-between">
-                        <h4 class="font-semibold text-gray-800">Notifications</h4>
-                        <span class={`px-2 py-1 rounded-full text-xs font-medium ${
-                          unreadCount > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {unreadCount} new
-                        </span>
-                      </div>
+                <div
+                  ref={(el) => notifDropdownRef = el as HTMLDivElement}
+                  class="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-2 max-h-96 overflow-y-auto z-[3000]"
+                  style={{ left: 'auto' }}
+                >
+                  <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-semibold text-gray-800">Notifications</h4>
+                      <span class={`px-2 py-1 rounded-full text-xs font-medium ${
+                        unreadCount > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {unreadCount} new
+                      </span>
                     </div>
-                    <For each={notifications.slice(0, 3)}>
+                  </div>
+                  <For each={notifications.slice(0, 3)}>
                     {(notification) => {
                       const Icon = getNotificationIcon(notification.type);
                       return (
@@ -325,10 +368,15 @@ const AppNavbar = (props) => {
                         </div>
                       );
                     }}
-                    </For>
-                  </div>
-                </Portal>
+                  </For>
+                </div>
               </Show>
+            </div>
+
+            {/* Current plan chip */}
+            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200 text-sm text-emerald-700">
+              <CalendarIcon size={16} class="text-emerald-600" />
+              <span class="max-w-[160px] truncate">{currentPlanName()}</span>
             </div>
 
             <button 
@@ -337,6 +385,26 @@ const AppNavbar = (props) => {
               aria-label="Refresh the current page"
             >
               <RefreshCw size={18} />
+            </button>
+
+            {/* Theme toggle */}
+            <button 
+              class="hidden md:inline-flex p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all duration-200" 
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title="Toggle theme"
+            >
+              {isDark() ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            {/* Settings button */}
+            <button 
+              class="hidden md:inline-flex p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all duration-200" 
+              onClick={() => navigate('/settings')}
+              aria-label="Settings"
+              title="Settings"
+            >
+              <Settings size={18} />
             </button>
 
             <button 

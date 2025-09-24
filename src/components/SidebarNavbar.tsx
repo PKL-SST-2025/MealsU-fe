@@ -53,7 +53,7 @@ const SidebarNavbar: Component<{ class?: string }> = (props) => {
 
   return (
     <>
-      <div class={`${props.class ?? ''} fixed top-0 left-0 h-screen w-24 bg-teal-50/80 backdrop-blur-sm border-r border-teal-100 shadow-sm flex flex-col items-center py-5 space-y-5 relative z-40 rounded-r-3xl`}>
+      <div class={`${props.class ?? ''} fixed top-0 left-0 h-screen w-24 bg-teal-50/80 backdrop-blur-sm border-r border-teal-100 shadow-sm flex flex-col items-center py-5 space-y-5 relative z-40 rounded-r-3xl transition-opacity ${showLogoutConfirm() ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* Brand Circle */}
         <div 
           class="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-teal-700 transition-colors shadow"
@@ -131,19 +131,27 @@ const SidebarNavbar: Component<{ class?: string }> = (props) => {
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm() && (
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-            <div class="flex items-center mb-4">
-              <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+        <div 
+          class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50"
+          onClick={cancelLogout}
+          onKeyDown={(e) => { if ((e as unknown as KeyboardEvent).key === 'Escape') cancelLogout(); }}
+          tabindex={-1}
+        >
+          <div 
+            class="bg-white rounded-2xl p-6 max-w-sm mx-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog" aria-modal="true" aria-labelledby="sidebar-logout-title"
+          >
+            <div class="flex items-start gap-3 mb-4">
+              <div class="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center">
                 <LogOut class="w-5 h-5 text-red-600" />
               </div>
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900">Confirm Logout</h3>
-                <p class="text-sm text-gray-600">Are you sure you want to logout?</p>
+              <div class="flex-1">
+                <h3 id="sidebar-logout-title" class="text-base font-semibold text-gray-900">Confirm Logout</h3>
+                <p class="text-sm text-gray-600">Are you sure you want to log out?</p>
               </div>
             </div>
-            
-            <div class="flex gap-3 justify-end">
+            <div class="flex gap-2 justify-end">
               <button
                 onClick={cancelLogout}
                 class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -154,7 +162,7 @@ const SidebarNavbar: Component<{ class?: string }> = (props) => {
                 onClick={confirmLogout}
                 class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
               >
-                Logout
+                Log out
               </button>
             </div>
           </div>
