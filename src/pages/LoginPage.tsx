@@ -2,6 +2,7 @@ import type { Component } from "solid-js";
 import { createSignal, createEffect } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import Navbar from "../components/Navbar";
+import { apiFetch, authHeader } from "../lib/api";
 
 const Input = (props: {
   type?: string;
@@ -75,22 +76,40 @@ const LoginPage: Component = () => {
     }
 
     setIsSubmitting(true);
+    setErrors({});
 
     try {
-      // Simulasi proses login (bisa diganti dengan API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simpan data login jika remember me dicentang
+      const res = await apiFetch<{ token: string }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email: email(), password: password() }),
+      });
+
+      if (!res.ok) {
+        setErrors({ email: res.error || "Login gagal. Silakan coba lagi." });
+        return;
+      }
+
+      // Simpan token JWT & email
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem('userEmail', email());
+
+      // Ambil profil dasar agar akun tersimpan dan bisa dipakai di halaman lain
+      const me = await apiFetch<{ email: string }>("/auth/me", { headers: { ...authHeader() } });
+      if (me.ok) {
+        try {
+          localStorage.setItem('auth:user', JSON.stringify({ email: me.data.email }));
+        } catch {}
+      }
+
+      // Simpan email jika remember me dicentang
       if (rememberMe()) {
         localStorage.setItem('rememberedEmail', email());
+      } else {
+        localStorage.removeItem('rememberedEmail');
       }
-      
-      // Set user sebagai logged in
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', email());
-      
+
       // Redirect ke home page
-      navigate("/home");
+      navigate("/home", { replace: true });
       
     } catch (error) {
       console.error("Login failed:", error);

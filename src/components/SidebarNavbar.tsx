@@ -1,6 +1,7 @@
 import { Component, createSignal } from "solid-js";
 import { useNavigate, useLocation } from "@solidjs/router";
 import { Home, Calendar, Utensils, BookOpen, ShoppingCart, Settings, HelpCircle, LogOut } from "lucide-solid";
+import { logout } from "../lib/api";
 
 const SidebarNavbar: Component<{ class?: string }> = (props) => {
   const navigate = useNavigate();
@@ -33,12 +34,14 @@ const SidebarNavbar: Component<{ class?: string }> = (props) => {
   };
 
   const confirmLogout = () => {
-    // Clear user session
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    
-    // Redirect to login
-    navigate('/login');
+    // Clear user session (hapus token JWT dan data terkait)
+    try {
+      logout();
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userEmail');
+    } catch {}
+    // Redirect ke login
+    navigate('/login', { replace: true });
     setShowLogoutConfirm(false);
   };
 
