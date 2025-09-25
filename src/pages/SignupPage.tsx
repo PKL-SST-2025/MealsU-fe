@@ -1,5 +1,8 @@
 import type { Component } from 'solid-js';
+import { createSignal } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import Navbar from '../components/Navbar';
+import { apiFetch } from '../lib/api';
 
 const Input = (props: {
   type?: string;
@@ -15,6 +18,33 @@ const Input = (props: {
 );
 
 const SignupPage: Component = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = createSignal("");
+  const [password, setPassword] = createSignal("");
+  const [submitting, setSubmitting] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+
+  const onSubmit = async (e: Event) => {
+    e.preventDefault();
+    setError(null);
+    if (!email().trim() || !password().trim()) {
+      setError('Email dan password wajib diisi');
+      return;
+    }
+    setSubmitting(true);
+    const res = await apiFetch<{ token: string }>("/auth/register", {
+      method: 'POST',
+      body: JSON.stringify({ email: email(), password: password() })
+    });
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(res.error || 'Registrasi gagal');
+      return;
+    }
+    // Setelah register berhasil, arahkan ke login
+    navigate('/login');
+  };
+
   return (
     <div class="min-h-screen">
       {/* Top Nav */}
@@ -38,7 +68,7 @@ const SignupPage: Component = () => {
             <h1 class="text-2xl font-bold text-gray-900">Sign up</h1>
             <p class="mt-1 text-sm text-gray-600">Daftar untuk menikmati fitur MealsU</p>
 
-            <form class="mt-6 space-y-3" onSubmit={(e) => e.preventDefault()}>
+            <form class="mt-6 space-y-3" onSubmit={onSubmit}>
               <div>
                 <label class="mb-1 block text-xs font-medium text-gray-700">Your Name</label>
                 <Input name="name" placeholder="Nama lengkap" />
@@ -53,14 +83,24 @@ const SignupPage: Component = () => {
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-gray-700">Email</label>
-                <Input type="email" name="email" placeholder="you@example.com" />
+                <input type="email" name="email" placeholder="you@example.com"
+                       value={email()} onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
+                       class="w-full rounded-lg border border-gray-300 bg-white/90 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#606C38] focus:ring-2 focus:ring-[#606C38]/40"/>
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-gray-700">Password</label>
-                <Input type="password" name="password" placeholder="Password" />
+                <input type="password" name="password" placeholder="Password"
+                       value={password()} onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
+                       class="w-full rounded-lg border border-gray-300 bg-white/90 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#606C38] focus:ring-2 focus:ring-[#606C38]/40"/>
               </div>
 
-              <button type="submit" class="mt-2 w-full rounded-lg bg-[#606C38] py-2 text-sm font-semibold text-white hover:bg-[#4f5a2f]">Sign up</button>
+              {error() && (
+                <div class="text-xs text-red-600">{error()}</div>
+              )}
+
+              <button type="submit" disabled={submitting()} class="mt-2 w-full rounded-lg py-2 text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-[#606C38] hover:bg-[#4f5a2f]">
+                {submitting() ? 'Processing...' : 'Sign up'}
+              </button>
 
               <div class="text-center text-xs text-gray-600">
                 Sudah punya akun? <a href="/login" class="font-medium text-[#606C38] hover:underline">Sign in</a>
