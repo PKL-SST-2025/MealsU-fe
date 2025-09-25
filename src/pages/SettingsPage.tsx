@@ -1,4 +1,4 @@
-import { createSignal, For, onMount, Show, createMemo, createEffect } from 'solid-js';
+import { createSignal, For, onMount, Show, createMemo, createEffect, Component, JSX } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import SidebarNavbar from '../components/SidebarNavbar'; // ✅ Import sidebar terpisah
 import { 
@@ -7,6 +7,7 @@ import {
   ChevronRight, Camera, Edit2,
   Trash2, LogOut, HelpCircle, Info
 } from 'lucide-solid'; // ✅ Ganti ke lucide-solid
+import { getProfile, updateProfile, logout as apiLogout, getMeasurements, updateMeasurements } from '../lib/api';
 
 const SettingsPage = () => {
   // Settings state
@@ -18,12 +19,22 @@ const SettingsPage = () => {
   const [metricUnits, setMetricUnits] = createSignal(true);
 
   // Profile info
-  const [profile, setProfile] = createSignal({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+  interface Profile {
+    name: string;
+    email: string;
+    dietaryPreference: string;
+    gender: string;
+    age: number;
+    bio: string;
+    avatar: string | null;
+  }
+
+  const [profile, setProfile] = createSignal<Profile>({
+    name: '',
+    email: '',
     dietaryPreference: 'Balanced Diet',
-    gender: 'Male',
-    age: 25,
+    gender: 'Other',
+    age: 0,
     bio: '',
     avatar: null
   });
@@ -42,7 +53,7 @@ const SettingsPage = () => {
   // Goals & activity
   const [goal, setGoal] = createSignal<'Weight Loss' | 'Maintain' | 'Muscle Gain'>('Maintain');
   const [activity, setActivity] = createSignal('Lightly active');
-  const [editProfile, setEditProfile] = createSignal<boolean>(true);
+  const [editProfile, setEditProfile] = createSignal<boolean>(false);
 
   // Saved snapshots to detect perubahan
   const [savedProfile, setSavedProfile] = createSignal<any>(null);
@@ -56,35 +67,67 @@ const SettingsPage = () => {
   // Logout modal state
   const [showLogoutConfirm, setShowLogoutConfirm] = createSignal(false);
   const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowLogoutConfirm(false); };
-  const confirmLogout = () => {
-    try {
-      localStorage.removeItem('auth:user');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('auth:token');
-      localStorage.removeItem('auth:demo');
-    } catch {}
+  const confirmLogout = async () => {
+    await apiLogout();
     navigate('/login');
   };
   const isProfileDirty = createMemo(() => savedProfile() ? !isEqual(profile(), savedProfile()) : false);
   const isBodyDirty = createMemo(() => savedBody() ? !isEqual(body(), savedBody()) : false);
   const isGADirty = createMemo(() => savedGA() ? !isEqual({ goal: goal(), activity: activity() }, savedGA()) : false);
 
-  // Load from localStorage on mount
-  onMount(() => {
-    try {
-      const p = localStorage.getItem('user:profile');
-      if (p) setProfile({ ...profile(), ...JSON.parse(p) });
-      const b = localStorage.getItem('user:body');
-      if (b) setBody({ ...body(), ...JSON.parse(b) });
+  // Load from API on mount
+  onMount(async () => {
+    const res = await getProfile();
+    if (res.ok) {
+      // Backend mengirimkan data profil, beberapa field bisa null
+      const backendProfile = res.data;
+      const fullProfile = {
+        ...profile(), // Mulai dengan default state
+        email: backendProfile.email, // email dijamin ada
+        name: backendProfile.name || '', // Beri string kosong jika null
+        dietaryPreference: backendProfile.dietary_preference || 'Balanced Diet',
+        gender: backendProfile.gender || 'Other',
+        age: backendProfile.age || 0,
+        bio: backendProfile.bio || '',
+        avatar: backendProfile.avatar || null,
+      };
+      setProfile(fullProfile);
+      setSavedProfile(fullProfile);
+
+      // Load body measurements from API
+      const measurementsRes = await getMeasurements();
+      if (measurementsRes.ok) {
+        const backendMeasurements = measurementsRes.data;
+        const fullMeasurements = {
+          height: backendMeasurements.height || 0,
+          currentWeight: backendMeasurements.current_weight || 0,
+          targetWeight: backendMeasurements.target_weight || 0,
+          waist: backendMeasurements.waist || 0,
+          chest: backendMeasurements.chest || 0,
+          thigh: backendMeasurements.thigh || 0,
+          arm: backendMeasurements.arm || 0,
+        };
+        setBody(fullMeasurements);
+        setSavedBody(fullMeasurements);
+      } else {
+        // If measurements not found, keep default values
+        setSavedBody(body());
+      }
+
+      // Goals are still loaded from localStorage for now
       const g = localStorage.getItem('user:goal');
       if (g) setGoal(JSON.parse(g));
       const a = localStorage.getItem('user:activity');
       if (a) setActivity(JSON.parse(a));
-      // set snapshots after load
-      setSavedProfile(profile());
-      setSavedBody(body());
+
       setSavedGA({ goal: goal(), activity: activity() });
-    } catch {}
+    } else {
+      showToast(`Error: ${res.error}`);
+      // Potentially navigate away if auth fails
+      if (res.error.toLowerCase().includes('token')) {
+        setTimeout(() => navigate('/login'), 2000);
+      }
+    }
   });
 
   // Save helpers and toast
@@ -96,20 +139,30 @@ const SettingsPage = () => {
     toastTimer = window.setTimeout(() => setToast(''), 1800);
   };
 
-  const saveProfile = () => {
-    try {
-      localStorage.setItem('user:profile', JSON.stringify(profile()));
+  const saveProfile = async () => {
+    console.log("💾 saveProfile called with:", profile());
+    const res = await updateProfile(profile());
+    if (res.ok) {
       showToast('Profile saved');
       setSavedProfile(profile());
       setEditProfile(false);
-    } catch {}
+    } else {
+      showToast(`Error: ${res.error}`);
+    }
   };
-  const saveBody = () => {
-    try {
-      localStorage.setItem('user:body', JSON.stringify(body()));
+  const cancelProfile = () => {
+    setProfile(savedProfile());
+    setEditProfile(false);
+  };
+  const saveBody = async () => {
+    console.log("💾 saveBody called with:", body());
+    const res = await updateMeasurements(body());
+    if (res.ok) {
       showToast('Measurements saved');
       setSavedBody(body());
-    } catch {}
+    } else {
+      showToast(`Error: ${res.error}`);
+    }
   };
   const saveGoals = () => {
     try {
@@ -129,7 +182,7 @@ const SettingsPage = () => {
     { code: 'it', name: 'Italiano', flag: '🇮🇹' }
   ];
 
-  const ToggleSwitch = (props) => (
+  const ToggleSwitch: Component<{ checked: boolean; onChange: (checked: boolean) => void }> = (props) => (
     <div class="flex items-center">
       <button
         class={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 ${
@@ -149,7 +202,19 @@ const SettingsPage = () => {
     </div>
   );
 
-  const SettingItem = (props) => (
+  const SettingItem: Component<{
+    icon: JSX.Element;
+    iconBg?: string;
+    title: string;
+    description?: string;
+    danger?: boolean;
+    onClick?: () => void;
+    value?: string | number;
+    toggle?: boolean;
+    checked?: boolean;
+    onChange?: (value: any) => void;
+    select?: boolean;
+  }> = (props) => (
     <div
       class={`flex items-center justify-between p-4 transition-colors border-b border-gray-50 last:border-b-0 ${
         props.danger ? 'hover:bg-red-50' : 'hover:bg-gray-50'
@@ -179,8 +244,8 @@ const SettingsPage = () => {
         )}
         {props.toggle ? (
           <ToggleSwitch 
-            checked={props.checked} 
-            onChange={props.onChange}
+            checked={props.checked ?? false} 
+            onChange={props.onChange as (checked: boolean) => void}
           />
         ) : props.select ? (
           <select class="text-sm text-gray-500 bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-teal-500 rounded pr-8 appearance-none">
@@ -193,7 +258,12 @@ const SettingsPage = () => {
     </div>
   );
 
-  const SettingSection = (props) => (
+  const SettingSection: Component<{
+    title: string;
+    actionEl?: JSX.Element;
+    action?: string;
+    children: JSX.Element;
+  }> = (props) => (
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
       <div class="p-4 border-b border-gray-100 bg-gray-50">
         <div class="flex items-center justify-between">
@@ -222,7 +292,7 @@ const SettingsPage = () => {
         <div class="relative">
           <div class={`w-20 h-20 bg-gradient-to-br ${profile().avatar ? 'from-teal-400 to-blue-500' : 'from-orange-400 to-red-500'} rounded-full flex items-center justify-center text-white text-2xl font-bold`}>
             {profile().avatar ? (
-              <img src={profile().avatar} alt="Profile" class="w-full h-full rounded-full object-cover" />
+              <img src={profile().avatar!} alt="Profile" class="w-full h-full rounded-full object-cover" />
             ) : (
               profile().name.split(' ').map(n => n[0]).join('')
             )}
@@ -362,7 +432,10 @@ const SettingsPage = () => {
                 {/* Profile Section */}
                 <SettingSection title="Profile Information" actionEl={
                   editProfile()
-                    ? <button disabled={!isProfileDirty()} onClick={saveProfile} class={`px-3 py-1.5 rounded-md text-sm font-medium ${isProfileDirty() ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>Save Changes</button>
+                    ? <div class="flex gap-2">
+                      <button onClick={cancelProfile} class="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">Cancel</button>
+                      <button disabled={!isProfileDirty()} onClick={saveProfile} class={`px-3 py-1.5 rounded-md text-sm font-medium ${isProfileDirty() ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>Save Changes</button>
+                    </div>
                     : <button onClick={() => setEditProfile(true)} class="px-3 py-1.5 rounded-md text-sm font-medium bg-teal-600 text-white hover:bg-teal-700">Edit</button>
                 }>
                   <ProfileEditor />

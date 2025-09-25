@@ -1,4 +1,4 @@
-import { createSignal, Show, For, onCleanup } from 'solid-js';
+import { createSignal, Show, For, onCleanup, onMount } from 'solid-js';
 // Portal not needed for notif dropdown after simplification
 import { useNavigate } from '@solidjs/router';
 import { 
@@ -7,11 +7,33 @@ import {
 } from 'lucide-solid'; // Hanya impor ikon yang digunakan
 
 import { ShoppingCart } from 'lucide-solid'; // Tambahkan ShoppingCart
+import { getProfile } from '../lib/api'; // Import getProfile
 
 const AppNavbar = (props: any) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = createSignal('');
   const [showNotifications, setShowNotifications] = createSignal(false);
+  const [profile, setProfile] = createSignal({} as any);
+  
+  // Load profile data on mount
+  onMount(async () => {
+    const res = await getProfile();
+    if (res.ok) {
+      setProfile(res.data);
+    }
+  });
+
+  // Helper function to get user initials from name or email
+  const getUserInitials = () => {
+    const profileData = profile();
+    if (profileData?.name && profileData.name.trim()) {
+      return profileData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+    }
+    if (profileData?.email) {
+      return profileData.email[0].toUpperCase();
+    }
+    return 'U';
+  };
   const [showCalendar, setShowCalendar] = createSignal(false); // (tidak dipakai untuk dropdown lagi di dashboard)
   const [showNewPlan, setShowNewPlan] = createSignal(false);
   const [planName, setPlanName] = createSignal('');
@@ -63,9 +85,10 @@ const AppNavbar = (props: any) => {
   };
 
   // Theme toggle (light/dark)
-  const [isDark, setIsDark] = createSignal<boolean>(() => {
+  const getInitialTheme = () => {
     try { return (localStorage.getItem('theme') || '') === 'dark'; } catch { return false; }
-  }) as any;
+  };
+  const [isDark, setIsDark] = createSignal(getInitialTheme());
   const toggleTheme = () => {
     const next = !isDark();
     setIsDark(next);
@@ -423,7 +446,11 @@ const AppNavbar = (props: any) => {
               title="User Profile"
               aria-label="Open user profile menu"
             >
-              <span class="text-sm font-semibold text-white relative z-10">U</span>
+              <Show when={profile()?.avatar} fallback={
+                <span class="text-sm font-semibold text-white relative z-10">{getUserInitials()}</span>
+              }>
+                <img src={profile().avatar} alt="Profile" class="w-full h-full rounded-full object-cover" />
+              </Show>
               <div class="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
               <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
             </button>
